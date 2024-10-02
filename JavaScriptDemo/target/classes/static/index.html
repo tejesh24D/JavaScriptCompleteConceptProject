@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <style>
+        .completed {
+            text-decoration: line-through;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Task Manager</h1>
+
+<!-- Form to add a new task -->
+<form id="taskForm">
+    <input type="text" id="taskDescription" placeholder="Enter task description" required>
+    <button type="submit">Add Task</button>
+</form>
+
+<h2>Task List</h2>
+<ul id="taskList"></ul>
+
+<!-- Error message placeholder -->
+<p class="error" id="errorMessage"></p>
+
+<!-- JavaScript code for interacting with the backend -->
+<script>
+    // Fetch all tasks on page load
+    function fetchTasks() {
+        fetch('/tasks')
+            .then(response => response.json())
+            .then(tasks => {
+                const taskList = document.getElementById('taskList');
+                taskList.innerHTML = ''; // Clear current tasks
+                tasks.forEach(task => {
+                    const li = document.createElement('li');
+                    li.textContent = task.description;
+                    li.id = 'task-' + task.id;
+
+                    if (task.completed) {
+                        li.classList.add('completed');
+                    }
+
+                    // Complete button
+                    const completeButton = document.createElement('button');
+                    completeButton.textContent = 'Complete';
+                    completeButton.onclick = () => completeTask(task.id);
+
+                    // Delete button
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.onclick = () => deleteTask(task.id);
+
+                    li.appendChild(completeButton);
+                    li.appendChild(deleteButton);
+                    taskList.appendChild(li);
+                });
+            })
+            .catch(error => displayError("Failed to fetch tasks: " + error.message));
+    }
+
+    // Add new task
+    document.getElementById('taskForm').addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent page refresh
+        const taskDescription = document.getElementById('taskDescription').value;
+
+        fetch('/tasks', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ description: taskDescription, completed: false }),
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to add task');
+                }
+                document.getElementById('taskDescription').value = ''; // Clear input
+                fetchTasks(); // Refresh task list
+            })
+            .catch(error => displayError("Error adding task: " + error.message));
+    });
+
+    // Complete a task
+    function completeTask(taskId) {
+        fetch(`/tasks/${taskId}/complete`, {
+            method: 'PUT',
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to complete task');
+                }
+                fetchTasks(); // Refresh task list
+            })
+            .catch(error => displayError("Error completing task: " + error.message));
+    }
+
+    // Delete a task
+    function deleteTask(taskId) {
+        fetch(`/tasks/${taskId}`, {
+            method: 'DELETE',
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to delete task');
+                }
+                fetchTasks(); // Refresh task list
+            })
+            .catch(error => displayError("Error deleting task: " + error.message));
+    }
+
+    // Display error messages
+    function displayError(message) {
+        const errorMessage = document.getElementById('errorMessage');
+        errorMessage.textContent = message;
+        setTimeout(() => {
+            errorMessage.textContent = ''; // Clear error after 5 seconds
+        }, 5000);
+    }
+
+    // Fetch tasks on initial page load
+    fetchTasks();
+
+</script>
+
+</body>
+</html>

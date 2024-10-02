@@ -1,0 +1,5 @@
+com\example\JavaScriptDemo\service\TaskService.class
+com\example\JavaScriptDemo\JavaScriptDemoApplication.class
+com\example\JavaScriptDemo\controller\TaskController.class
+com\example\JavaScriptDemo\model\Task.class
+com\example\JavaScriptDemo\repository\TaskRepository.class
